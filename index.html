@@ -113,6 +113,7 @@
           const signer = provider.getSigner();
           const address = await signer.getAddress();
           document.getElementById("connectWalletBtn").innerText = `🔗 ${address.slice(0,6)}...${address.slice(-4)}`;
+          listDraws();
         } catch (err) {
           alert("Cüzdan bağlantısı reddedildi.");
         }
@@ -145,24 +146,51 @@
         const signer = provider.getSigner();
         const contractAddress = "0x87da779a82ac58d787de6d54fbd3ca0675756a45";
         const abi = [
-          "function createDraw(string memory title, string memory deadline, bool[4] memory tasks) public payable"
+          "function createDraw(string memory title, string memory deadline, bool[4] memory tasks) public payable",
+          "function getDrawCount() public view returns (uint256)",
+          "function getDraw(uint256 index) public view returns (string memory title, string memory deadline, bool[4] memory tasks, address creator)"
         ];
         const contract = new ethers.Contract(contractAddress, abi, signer);
 
         const fee = ethers.utils.parseEther("0.001");
-        const balance = await signer.getBalance();
-        if (balance.lt(fee)) {
-          alert("Yeterli ETH yok. 0.001 ETH gerekiyor.");
-          return;
-        }
-
         const tx = await contract.createDraw(title, deadline, tasks, { value: fee });
         await tx.wait();
         alert("Çekiliş başarıyla başlatıldı.");
         document.getElementById("createSection").style.display = "none";
+        listDraws();
       } catch (err) {
         console.error("Çekiliş başlatılamadı:", err);
         alert("Bir hata oluştu. Konsolu kontrol et.");
+      }
+    }
+
+    async function listDraws() {
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const contractAddress = "0x87da779a82ac58d787de6d54fbd3ca0675756a45";
+        const abi = [
+          "function getDrawCount() public view returns (uint256)",
+          "function getDraw(uint256 index) public view returns (string memory title, string memory deadline, bool[4] memory tasks, address creator)"
+        ];
+        const contract = new ethers.Contract(contractAddress, abi, provider);
+
+        const count = await contract.getDrawCount();
+        const list = document.getElementById("drawList");
+        list.innerHTML = "";
+
+        for (let i = 0; i < count; i++) {
+          const draw = await contract.getDraw(i);
+          const div = document.createElement("div");
+          div.className = "draw-card";
+          div.innerHTML = `
+            <h3>${draw.title}</h3>
+            <p>Bitiş: ${draw.deadline}</p>
+            <p>Oluşturan: ${draw.creator.slice(0, 6)}...${draw.creator.slice(-4)}</p>
+          `;
+          list.appendChild(div);
+        }
+      } catch (err) {
+        console.error("Listeleme hatası:", err);
       }
     }
   </script>
