@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Web3 Çarklı Çekiliş</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #121212;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    textarea {
+      width: 400px;
+      height: 100px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      padding: 10px;
+      resize: none;
+    }
+
+    canvas {
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #00bcd4;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+    }
+
+    .result {
+      font-size: 20px;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #4caf50;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌀 Web3 Çarklı Çekiliş</h1>
+
+  <button onclick="connectWallet()">Cüzdan Bağla 🔗</button>
+  <p id="walletAddress"></p>
+
+  <button onclick="joinOnChainDraw()">Zincir Üzerinde Çekilişe Katıl</button>
+  <button onclick="fetchOnChainParticipants()">Zincirden Katılımcıları Çek</button>
+
+  <textarea id="walletsInput" placeholder="0x123...\n0x456...\n0x789..."></textarea>
+  <br />
+  <input type="file" id="csvInput" accept=".csv" />
+  <br />
+  <button onclick="loadCSV()">CSV Yükle</button>
+  <button onclick="loadWheel()">Çarkı Yükle</button>
+  <button onclick="spinWheel()">SPIN 🌀</button>
+
+  <canvas id="wheel" width="500" height="500"></canvas>
+  <div class="result" id="winnerDisplay"></div>
+  <button onclick="shareOnTwitter()">Twitter'da Paylaş 🐦</button>
+
+  <script>
+    const CONTRACT_ADDRESS = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
+    const CONTRACT_ABI = [
+      "function joinDraw() public",
+      "function getParticipants(uint256 drawId) public view returns (address[] memory)",
+      "function currentDrawId() view returns (uint256)"
+    ];
+
+    let provider;
+    let signer;
+    let contract;
+    let userAddress = "";
+    let drawId = 1;
+
+    async function connectWallet() {
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      document.getElementById("walletAddress").innerText = "Bağlı: " + userAddress;
+      contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      drawId = await contract.currentDrawId();
+    }
+
+    async function joinOnChainDraw() {
+      if (!contract) return alert("Önce cüzdan bağla.");
+      const tx = await contract.joinDraw();
+      await tx.wait();
+      alert("Çekilişe katıldınız!");
+    }
+
+    async function fetchOnChainParticipants() {
+      if (!contract) return alert("Önce cüzdan bağla.");
+      const result = await contract.getParticipants(drawId);
+      document.getElementById("walletsInput").value = result.join("\n");
+    }
+
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    let addresses = [];
+    let angle = 0;
+    let spinning = false;
+    let winner = "";
+
+    function drawWheel() {
+      const radius = canvas.width / 2;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const sliceAngle = (2 * Math.PI) / addresses.length;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < addresses.length; i++) {
+        const startAngle = angle + i * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.fillStyle = i % 2 === 0 ? "#2196f3" : "#f44336";
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.fillStyle = "white";
+        ctx.font = "14px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(addresses[i].slice(0, 10) + "...", radius - 10, 5);
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(centerX - 10, centerY - radius - 10);
+      ctx.lineTo(centerX + 10, centerY - radius - 10);
+      ctx.lineTo(centerX, centerY - radius + 10);
+      ctx.fillStyle = "#ffeb3b";
+      ctx.fill();
+    }
+
+    function loadWheel() {
+      const input = document.getElementById("walletsInput").value.trim();
+      addresses = input.split("\n").map(a => a.trim()).filter(Boolean);
+      if (addresses.length < 2) {
+        alert("En az 2 adres gir!");
+        return;
+      }
+      angle = 0;
+      drawWheel();
+      document.getElementById("winnerDisplay").textContent = "";
+    }
+
+    function spinWheel() {
+      if (spinning || addresses.length < 2) return;
+
+      spinning = true;
+      let spinAngle = Math.random() * 360 + 720;
+      let duration = 4000;
+      let start = null;
+
+      function animate(timestamp) {
+        if (!start) start = timestamp;
+        const elapsed = timestamp - start;
+        const progress = Math.min(elapsed / duration, 1);
+        angle = (spinAngle * easeOut(progress)) * Math.PI / 180;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          spinning = false;
+          const selectedIndex = Math.floor((addresses.length - (angle / (2 * Math.PI) * addresses.length)) % addresses.length);
+          const finalIndex = (selectedIndex + addresses.length) % addresses.length;
+          winner = addresses[finalIndex];
+          document.getElementById("winnerDisplay").textContent = "Kazanan: " + winner;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function easeOut(t) {
+      return --t * t * t + 1;
+    }
+
+    function loadCSV() {
+      const file = document.getElementById("csvInput").files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+        document.getElementById("walletsInput").value = lines.join("\n");
+      };
+      reader.readAsText(file);
+    }
+
+    function shareOnTwitter() {
+      if (!winner) {
+        alert("Önce kazananı belirlemelisin!");
+        return;
+      }
+      const tweetText = `Kazanan cüzdan: ${winner} 🎉\nWeb3 Çarklı Çekiliş ile adil çekiliş yap!`;
+      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+      window.open(url, '_blank');
+    }
+  </script>
+</body>
+</html>
