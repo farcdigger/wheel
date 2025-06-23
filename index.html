@@ -144,7 +144,7 @@
 
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
-        const contractAddress = "0x87da779a82ac58d787de6d54fbd3ca0675756a45";
+        const contractAddress = "0x56a2a7f0b623ee950d71bbf9c970bd91e32c6a00";
         const abi = [
           "function createDraw(string memory title, string memory deadline, bool[4] memory tasks) public payable",
           "function getDrawCount() public view returns (uint256)",
@@ -167,7 +167,7 @@
     async function listDraws() {
       try {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const contractAddress = "0x87da779a82ac58d787de6d54fbd3ca0675756a45";
+        const contractAddress = "0x56a2a7f0b623ee950d71bbf9c970bd91e32c6a00";
         const abi = [
           "function getDrawCount() public view returns (uint256)",
           "function getDraw(uint256 index) public view returns (string memory title, string memory deadline, bool[4] memory tasks, address creator)"
