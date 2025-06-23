@@ -3,76 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Web3 Çarklı Çekiliş</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js">    async function createDraw() {
-      try {
-        const title = document.getElementById("newTitle").value;
-        const deadline = document.getElementById("newEnd").value;
-        const tasks = [
-          document.getElementById("taskFollow").checked,
-          document.getElementById("taskLike").checked,
-          document.getElementById("taskRetweet").checked,
-          document.getElementById("taskComment").checked,
-        ];
-
-        if (!title || !deadline) {
-          alert("Başlık ve bitiş tarihi zorunludur.");
-          return;
-        }
-
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
-        const abi = [
-          "function createDraw(string memory title, string memory deadline, bool[4] memory tasks) public payable"
-        ];
-        const contract = new ethers.Contract(contractAddress, abi, signer);
-
-        const tx = await contract.createDraw(title, deadline, tasks, {
-          value: ethers.utils.parseEther("0.001"),
-        });
-
-        await tx.wait();
-        alert("Çekiliş başarıyla başlatıldı.");
-        document.getElementById("createSection").style.display = "none";
-      } catch (err) {
-        console.error("Çekiliş başlatılamadı:", err);
-        alert("Bir hata oluştu. Konsolu kontrol et.");
-      }
-    }
-      async function joinDraw() {
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
-        const abi = ["function joinDraw(uint256 drawId) public"];
-        const contract = new ethers.Contract(contractAddress, abi, signer);
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const drawId = parseInt(urlParams.get("id"));
-
-        const tx = await contract.joinDraw(drawId);
-        await tx.wait();
-        alert("Çekilişe başarıyla katıldınız!");
-      } catch (e) {
-        console.error("Katılım hatası:", e);
-        alert("Katılım başarısız oldu.");
-      }
-    }
-
-    async function getWinner(drawId) {
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
-        const abi = ["function getWinner(uint256 drawId) public view returns (address)"];
-        const contract = new ethers.Contract(contractAddress, abi, provider);
-        const winner = await contract.getWinner(drawId);
-        return winner;
-      } catch (e) {
-        console.error("Kazanan çekilemedi:", e);
-        return null;
-      }
-    }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -133,6 +64,7 @@
   </style>
 </head>
 <body>
+  <button id="connectWalletBtn" onclick="connectWallet()">🔌 Cüzdanı Bağla</button>
   <h1>🌀 Aktif Çekilişler</h1>
   <div class="container" id="drawList"></div>
   <button onclick="showCreateForm()">+ Yeni Çekiliş Başlat</button>
@@ -287,5 +219,92 @@
       }
     }
   </script>
+<script>
+    async function createDraw() {
+      try {
+        const title = document.getElementById("newTitle").value;
+        const deadline = document.getElementById("newEnd").value;
+        const tasks = [
+          document.getElementById("taskFollow").checked,
+          document.getElementById("taskLike").checked,
+          document.getElementById("taskRetweet").checked,
+          document.getElementById("taskComment").checked,
+        ];
+
+        if (!title || !deadline) {
+          alert("Başlık ve bitiş tarihi zorunludur.");
+          return;
+        }
+
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
+        const abi = [
+          "function createDraw(string memory title, string memory deadline, bool[4] memory tasks) public payable"
+        ];
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+
+        const tx = await contract.createDraw(title, deadline, tasks, {
+          value: ethers.utils.parseEther("0.001"),
+        });
+
+        await tx.wait();
+        alert("Çekiliş başarıyla başlatıldı.");
+        document.getElementById("createSection").style.display = "none";
+      } catch (err) {
+        console.error("Çekiliş başlatılamadı:", err);
+        alert("Bir hata oluştu. Konsolu kontrol et.");
+      }
+    }
+
+    async function joinDraw() {
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
+        const abi = ["function joinDraw(uint256 drawId) public"];
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const drawId = parseInt(urlParams.get("id"));
+
+        const tx = await contract.joinDraw(drawId);
+        await tx.wait();
+        alert("Çekilişe başarıyla katıldınız!");
+      } catch (e) {
+        console.error("Katılım hatası:", e);
+        alert("Katılım başarısız oldu.");
+      }
+    }
+
+    async function getWinner(drawId) {
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
+        const abi = ["function getWinner(uint256 drawId) public view returns (address)"];
+        const contract = new ethers.Contract(contractAddress, abi, provider);
+        const winner = await contract.getWinner(drawId);
+        return winner;
+      } catch (e) {
+        console.error("Kazanan çekilemedi:", e);
+        return null;
+      }
+    }
+async function connectWallet() {
+  if (window.ethereum) {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+      const address = await signer.getAddress();
+      document.getElementById("connectWalletBtn").innerText = "🔗 " + address.slice(0, 6) + "..." + address.slice(-4);
+    } catch (error) {
+      alert("Cüzdan bağlanamadı");
+    }
+  } else {
+    alert("MetaMask yüklü değil");
+  }
+}
+</script>
 </body>
 </html>
