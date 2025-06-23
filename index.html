@@ -45,7 +45,7 @@
       display: none;
     }
 
-    textarea, input[type="text"] {
+    textarea, input[type="text"], input[type="date"] {
       width: 100%;
       margin-bottom: 10px;
       border-radius: 10px;
@@ -90,7 +90,7 @@
     <h2>Yeni Çekiliş Oluştur</h2>
     <p>Çekiliş başlatmak için 0.001 ETH ödeme yapılacaktır.</p>
     <input type="text" id="newTitle" placeholder="Çekiliş Başlığı" />
-    <input type="text" id="newEnd" placeholder="Bitiş Tarihi (örn: 2025-07-10)" />
+    <input type="date" id="newEnd" placeholder="Bitiş Tarihi" />
     <h4>Görev Seçimi:</h4>
     <label><input type="checkbox" id="taskFollow"> Takip</label><br />
     <label><input type="checkbox" id="taskLike"> Beğeni</label><br />
@@ -105,121 +105,26 @@
   </div>
 
   <script>
-    let currentUser = "";
-    let drawCreator = "";
-    let wheelParticipants = [];
-    let angle = 0;
-    let spinning = false;
-    let canvas, ctx;
-
-    window.onload = () => {
-      canvas = document.getElementById("wheelCanvas");
-      ctx = canvas.getContext("2d");
-      checkCurrentUser();
-    };
-
-    function checkCurrentUser() {
-      if (window.ethereum) {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        provider.send("eth_requestAccounts", []).then(() => {
+    async function connectWallet() {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
           const signer = provider.getSigner();
-          signer.getAddress().then(address => {
-            currentUser = address.toLowerCase();
-          });
-        });
+          const address = await signer.getAddress();
+          document.getElementById("connectWalletBtn").innerText = `🔗 ${address.slice(0,6)}...${address.slice(-4)}`;
+        } catch (err) {
+          alert("Cüzdan bağlantısı reddedildi.");
+        }
+      } else {
+        alert("Metamask yüklü değil.");
       }
     }
 
     function showCreateForm() {
       document.getElementById("createSection").style.display = "block";
-      document.getElementById("drawDetails").style.display = "none";
     }
 
-    async function fetchParticipants(drawId) {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
-      const abi = ["function getParticipants(uint256 drawId) public view returns (address[] memory)"];
-      const contract = new ethers.Contract(contractAddress, abi, provider);
-      return await contract.getParticipants(drawId);
-    }
-
-    async function loadDrawDetails(drawId, creatorAddress) {
-      drawCreator = creatorAddress.toLowerCase();
-      const participants = await fetchParticipants(drawId);
-      wheelParticipants = participants.map(p => p.toLowerCase());
-      drawWheel();
-      const winner = await getWinner(drawId);
-      if (winner && winner !== "0x0000000000000000000000000000000000000000") {
-        document.getElementById("winnerAddress").innerText = winner;
-      }
-      drawWheel();
-      if (currentUser === drawCreator) {
-        document.getElementById("wheelCanvas").style.display = "block";
-        document.getElementById("spinButton").style.display = "inline-block";
-      } else {
-        document.getElementById("wheelCanvas").style.display = "none";
-        document.getElementById("spinButton").style.display = "none";
-      }
-    }
-
-    function drawWheel() {
-      const radius = canvas.width / 2;
-      const num = wheelParticipants.length;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let i = 0; i < num; i++) {
-        const startAngle = (2 * Math.PI / num) * i + angle;
-        const endAngle = startAngle + 2 * Math.PI / num;
-        ctx.beginPath();
-        ctx.moveTo(radius, radius);
-        ctx.arc(radius, radius, radius, startAngle, endAngle);
-        ctx.fillStyle = i % 2 === 0 ? '#00bcd4' : '#26c6da';
-        ctx.fill();
-        ctx.save();
-        ctx.translate(radius, radius);
-        ctx.rotate(startAngle + Math.PI / num);
-        ctx.fillStyle = '#000';
-        ctx.font = '14px sans-serif';
-        ctx.fillText(wheelParticipants[i].slice(0, 6), radius / 2, 0);
-        ctx.restore();
-      }
-    }
-
-    async function spinWheel() {
-      if (spinning || wheelParticipants.length === 0) return;
-      spinning = true;
-      let spinAngle = Math.random() * 5 + 5;
-      let step = 0;
-      const interval = setInterval(() => {
-        angle += 0.1 + spinAngle * (0.99 ** step);
-        drawWheel();
-        step++;
-        if (step > 100) {
-          clearInterval(interval);
-          const winnerIndex = Math.floor(((2 * Math.PI - angle % (2 * Math.PI)) / (2 * Math.PI)) * wheelParticipants.length) % wheelParticipants.length;
-          const winner = wheelParticipants[winnerIndex];
-          alert("Kazanan: " + winner);
-          spinning = false;
-          writeWinnerOnChain(winner);
-        }
-      }, 30);
-    }
-
-    async function writeWinnerOnChain(winnerAddress) {
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
-        const abi = ["function setWinner(address winner) public"];
-        const contract = new ethers.Contract(contractAddress, abi, signer);
-        const tx = await contract.setWinner(winnerAddress);
-        await tx.wait();
-        console.log("Winner written to chain:", winnerAddress);
-      } catch (e) {
-        console.error("Error writing winner:", e);
-      }
-    }
-  </script>
-<script>
     async function createDraw() {
       try {
         const title = document.getElementById("newTitle").value;
@@ -244,10 +149,18 @@
         ];
         const contract = new ethers.Contract(contractAddress, abi, signer);
 
-        const tx = await contract.createDraw(title, deadline, tasks, {
-          value: ethers.utils.parseEther("0.001"),
-        });
+        const fee = ethers.utils.parseEther("0.001");
+        const estimatedGas = await contract.estimateGas.createDraw(title, deadline, tasks, { value: fee });
+        const gasPrice = await provider.getGasPrice();
+        const totalCost = fee.add(estimatedGas.mul(gasPrice));
 
+        const balance = await signer.getBalance();
+        if (balance.lt(totalCost)) {
+          alert("Yeterli ETH yok. 0.001 ETH'ye ek olarak gas ücretini de karşılamanız gerekiyor.");
+          return;
+        }
+
+        const tx = await contract.createDraw(title, deadline, tasks, { value: fee });
         await tx.wait();
         alert("Çekiliş başarıyla başlatıldı.");
         document.getElementById("createSection").style.display = "none";
@@ -256,55 +169,6 @@
         alert("Bir hata oluştu. Konsolu kontrol et.");
       }
     }
-
-    async function joinDraw() {
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
-        const abi = ["function joinDraw(uint256 drawId) public"];
-        const contract = new ethers.Contract(contractAddress, abi, signer);
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const drawId = parseInt(urlParams.get("id"));
-
-        const tx = await contract.joinDraw(drawId);
-        await tx.wait();
-        alert("Çekilişe başarıyla katıldınız!");
-      } catch (e) {
-        console.error("Katılım hatası:", e);
-        alert("Katılım başarısız oldu.");
-      }
-    }
-
-    async function getWinner(drawId) {
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const contractAddress = "0x030b936c37027d6f524bf5aa29b43775b6c86e0e";
-        const abi = ["function getWinner(uint256 drawId) public view returns (address)"];
-        const contract = new ethers.Contract(contractAddress, abi, provider);
-        const winner = await contract.getWinner(drawId);
-        return winner;
-      } catch (e) {
-        console.error("Kazanan çekilemedi:", e);
-        return null;
-      }
-    }
-async function connectWallet() {
-  if (window.ethereum) {
-    try {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
-      const address = await signer.getAddress();
-      document.getElementById("connectWalletBtn").innerText = "🔗 " + address.slice(0, 6) + "..." + address.slice(-4);
-    } catch (error) {
-      alert("Cüzdan bağlanamadı");
-    }
-  } else {
-    alert("MetaMask yüklü değil");
-  }
-}
-</script>
+  </script>
 </body>
 </html>
