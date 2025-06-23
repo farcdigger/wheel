@@ -150,13 +150,9 @@
         const contract = new ethers.Contract(contractAddress, abi, signer);
 
         const fee = ethers.utils.parseEther("0.001");
-        const estimatedGas = await contract.estimateGas.createDraw(title, deadline, tasks, { value: fee });
-        const gasPrice = await provider.getGasPrice();
-        const totalCost = fee.add(estimatedGas.mul(gasPrice));
-
         const balance = await signer.getBalance();
-        if (balance.lt(totalCost)) {
-          alert("Yeterli ETH yok. 0.001 ETH'ye ek olarak gas ücretini de karşılamanız gerekiyor.");
+        if (balance.lt(fee)) {
+          alert("Yeterli ETH yok. 0.001 ETH gerekiyor.");
           return;
         }
 
