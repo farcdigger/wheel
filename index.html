@@ -3,761 +3,790 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Web3 Çarklı Çekiliş</title>
+  <title>Web3 Twitter Çekiliş Platformu</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
-      color: white;
-      padding: 20px;
-      min-height: 100vh;
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
     }
 
-    .header h1 {
-      background: linear-gradient(45deg, #00bcd4, #ff6b6b);
+    .navbar {
+      background: rgba(20, 20, 20, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #1DA1F2, #E1306C);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-size: 2.5rem;
-      margin: 0;
+    }
+
+    .wallet-section {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1DA1F2, #0088cc);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(29, 161, 242, 0.3);
+    }
+
+    .btn-twitter {
+      background: #1DA1F2;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 4rem 0;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff, #888);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin: 3rem 0;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #1DA1F2;
+    }
+
+    .draws-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
     }
 
     .draw-card {
-      background: linear-gradient(145deg, #1e1e2e, #252540);
-      border: 1px solid #444;
-      padding: 20px;
-      border-radius: 15px;
-      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
       transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
+      cursor: pointer;
     }
 
     .draw-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(0, 188, 212, 0.3);
-      border-color: #00bcd4;
+      border-color: #1DA1F2;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(29, 161, 242, 0.2);
     }
 
-    .draw-card::before {
-      content: '';
-      position: absolute;
+    .prize-badge {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #000;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+
+    .tasks-preview {
+      display: flex;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .task-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(29, 161, 242, 0.2);
+      border: 1px solid #1DA1F2;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
       top: 0;
-      left: -100%;
+      left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      transition: left 0.5s;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
     }
 
-    .draw-card:hover::before {
-      left: 100%;
-    }
-
-    .draw-card h3 {
-      margin-top: 0;
-      color: #00bcd4;
-      font-size: 1.3rem;
-    }
-
-    .draw-card p {
-      margin: 8px 0;
-      opacity: 0.9;
-    }
-
-    .section {
-      border: 1px solid #333;
-      border-radius: 15px;
-      padding: 25px;
-      margin: 20px auto;
-      width: 90%;
-      max-width: 700px;
-      background: linear-gradient(145deg, #1e1e2e, #252540);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .detail-section {
-      margin-top: 30px;
-      display: none;
-    }
-
-    .tasks-list {
-      background: #2a2a3e;
-      padding: 15px;
-      border-radius: 10px;
-      margin: 15px 0;
-    }
-
-    .tasks-list li {
-      margin: 10px 0;
-      padding: 8px;
-      background: #333;
-      border-radius: 5px;
-      list-style: none;
-    }
-
-    .tasks-list input[type="checkbox"] {
-      margin-right: 10px;
-      transform: scale(1.2);
-    }
-
-    textarea, input[type="text"], input[type="date"] {
-      width: 100%;
-      margin-bottom: 15px;
-      border-radius: 10px;
-      padding: 12px;
-      border: 1px solid #444;
-      background: #2a2a3e;
-      color: white;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    textarea:focus, input:focus {
-      outline: none;
-      border-color: #00bcd4;
-      box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
-    }
-
-    button {
-      padding: 12px 25px;
-      font-size: 16px;
-      background: linear-gradient(45deg, #00bcd4, #0097a7);
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      margin: 5px;
-      color: white;
-      font-weight: bold;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0, 188, 212, 0.4);
-    }
-
-    button:disabled {
-      background: #666;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .btn-secondary {
-      background: linear-gradient(45deg, #ff6b6b, #ee5a52);
-    }
-
-    .btn-success {
-      background: linear-gradient(45deg, #4caf50, #45a049);
-    }
-
-    #wheelCanvas {
-      display: none;
-      margin: 20px auto;
-      border-radius: 50%;
-      border: 5px solid #00bcd4;
-      box-shadow: 0 0 30px rgba(0, 188, 212, 0.5);
-    }
-
-    .wheel-container {
-      text-align: center;
-      margin: 30px 0;
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 5px 10px;
+    .modal-content {
+      background: #1a1a1a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-left: 10px;
+      max-width: 600px;
+      margin: 5% auto;
+      padding: 2rem;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
-    .status-active {
-      background: #4caf50;
-      color: white;
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 1.5rem;
+      cursor: pointer;
     }
 
-    .status-ended {
-      background: #f44336;
-      color: white;
+    .form-group {
+      margin-bottom: 1.5rem;
     }
 
-    .participant-count {
-      background: #2196f3;
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #ccc;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
       color: white;
-      padding: 5px 10px;
-      border-radius: 15px;
-      font-size: 14px;
-      display: inline-block;
-      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    .token-input-group {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+    }
+
+    .tasks-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .task-option {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .task-option.selected {
+      border-color: #1DA1F2;
+      background: rgba(29, 161, 242, 0.1);
+    }
+
+    .task-option:hover {
+      border-color: rgba(29, 161, 242, 0.5);
+    }
+
+    .fee-info {
+      background: rgba(255, 165, 0, 0.1);
+      border: 1px solid rgba(255, 165, 0, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1DA1F2, #00ff88);
+      transition: width 0.3s ease;
+    }
+
+    .participant-list {
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .participant-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .twitter-verification {
+      background: rgba(29, 161, 242, 0.1);
+      border: 1px solid #1DA1F2;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      margin: 1rem 0;
     }
 
     @media (max-width: 768px) {
-      .container {
+      .hero h1 {
+        font-size: 2rem;
+      }
+      
+      .draws-grid {
         grid-template-columns: 1fr;
       }
       
-      .section {
-        width: 95%;
-        padding: 15px;
-      }
-      
-      .header h1 {
-        font-size: 2rem;
+      .modal-content {
+        margin: 10% 1rem;
       }
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <button id="connectWalletBtn" onclick="connectWallet()">🔌 Cüzdanı Bağla</button>
-    <h1>🌀 Web3 Çarklı Çekiliş</h1>
-  </div>
+  <nav class="navbar">
+    <div class="logo">🎯 TwitterLotto</div>
+    <div class="wallet-section">
+      <button class="btn btn-twitter" onclick="connectTwitter()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+        </svg>
+        Twitter Bağla
+      </button>
+      <button id="connectWalletBtn" class="btn btn-primary" onclick="connectWallet()">
+        Cüzdan Bağla
+      </button>
+    </div>
+  </nav>
 
-  <div class="container" id="drawList">
-    <!-- Çekilişler buraya yüklenecek -->
-  </div>
+  <div class="container">
+    <div class="hero">
+      <h1>Twitter Görevli Web3 Çekilişleri</h1>
+      <p style="color: #888; font-size: 1.2rem;">Sosyal medya görevlerini tamamla, blockchain güvencesiyle ödüller kazan!</p>
+    </div>
 
-  <div style="text-align: center;">
-    <button onclick="showCreateForm()">+ Yeni Çekiliş Başlat</button>
-  </div>
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-value" id="totalDraws">0</div>
+        <div>Toplam Çekiliş</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalPrize">0 ETH</div>
+        <div>Toplam Ödül</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalParticipants">0</div>
+        <div>Toplam Katılımcı</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="activeDraws">0</div>
+        <div>Aktif Çekiliş</div>
+      </div>
+    </div>
 
-  <!-- Çekiliş Detay Bölümü -->
-  <div class="section detail-section" id="drawDetails">
-    <h2 id="drawTitle"></h2>
-    <p><strong>Bitiş Tarihi:</strong> <span id="drawDeadline"></span></p>
-    <p><strong>Katılımcı Sayısı:</strong> <span id="drawParticipants" class="participant-count">0</span></p>
-    <p><strong>Kazanan:</strong> <span id="winnerAddress">Henüz belirlenmedi</span></p>
+    <div style="text-align: center; margin: 2rem 0;">
+      <button class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2rem;" onclick="showCreateModal()">
+        ✨ Yeni Çekiliş Başlat
+      </button>
+    </div>
 
-    <h3>Katılım Görevleri</h3>
-    <ul class="tasks-list" id="tasksList">
-      <!-- Görevler dinamik olarak yüklenecek -->
-    </ul>
-    
-    <div style="text-align: center; margin: 20px 0;">
-      <button onclick="simulateTasks()" class="btn-secondary">🔍 Görevleri Doğrula</button>
-      <button id="joinBtn" onclick="joinDraw()" disabled class="btn-success">✨ Çekilişe Katıl</button>
-      <button id="selectWinnerBtn" onclick="selectWinner()" style="display:none;" class="btn-secondary">🎯 Kazananı Seç</button>
+    <h2 style="margin: 2rem 0;">Aktif Çekilişler</h2>
+    <div class="draws-grid" id="drawsList">
+      <!-- Çekilişler buraya yüklenecek -->
     </div>
   </div>
 
-  <!-- Çekiliş Oluşturma Bölümü -->
-  <div class="section detail-section" id="createSection">
-    <h2>🚀 Yeni Çekiliş Oluştur</h2>
-    <p><strong>Not:</strong> Çekiliş başlatmak için 0.001 ETH ödeme yapılacaktır.</p>
-    
-    <input type="text" id="newTitle" placeholder="🎁 Çekiliş Başlığı (örn: 100 USDT Çekilişi)" />
-    <input type="date" id="newEnd" placeholder="📅 Bitiş Tarihi" />
-    
-    <h4>📋 Görev Seçimi:</h4>
-    <div style="background: #2a2a3e; padding: 15px; border-radius: 10px; margin: 10px 0;">
-      <label style="display: block; margin: 10px 0;"><input type="checkbox" id="taskFollow"> 👥 Twitter hesabını takip et</label>
-      <label style="display: block; margin: 10px 0;"><input type="checkbox" id="taskLike"> ❤️ Tweet'i beğen</label>
-      <label style="display: block; margin: 10px 0;"><input type="checkbox" id="taskRetweet"> 🔄 Tweet'i retweetle</label>
-      <label style="display: block; margin: 10px 0;"><input type="checkbox" id="taskComment"> 💬 Tweet'e yorum yap</label>
-    </div>
-    
-    <div style="text-align: center;">
-      <button onclick="createDraw()" class="btn-success">🎉 Çekilişi Başlat</button>
-      <button onclick="hideCreateForm()" class="btn-secondary">❌ İptal</button>
+  <!-- Çekiliş Oluşturma Modal -->
+  <div id="createModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal('createModal')">&times;</button>
+      <h2>🎯 Yeni Çekiliş Oluştur</h2>
+      
+      <form id="createDrawForm" onsubmit="createDraw(event)">
+        <div class="form-group">
+          <label>Çekiliş Başlığı</label>
+          <input type="text" name="title" placeholder="Örn: 1000 USDT Mega Çekiliş" required>
+        </div>
+
+        <div class="form-group">
+          <label>Ödül Bilgileri</label>
+          <div class="token-input-group">
+            <input type="number" name="prizeAmount" placeholder="Miktar" step="0.000001" required>
+            <select name="prizeToken">
+              <option value="ETH">ETH</option>
+              <option value="USDT">USDT</option>
+              <option value="USDC">USDC</option>
+              <option value="custom">Özel Token</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Bitiş Tarihi</label>
+          <input type="datetime-local" name="deadline" required>
+        </div>
+
+        <div class="form-group">
+          <label>Twitter Görevleri</label>
+          <div class="tasks-selector">
+            <div class="task-option" data-task="follow" onclick="toggleTask(this)">
+              <div style="font-size: 2rem;">👥</div>
+              <div>Takip Et</div>
+            </div>
+            <div class="task-option" data-task="like" onclick="toggleTask(this)">
+              <div style="font-size: 2rem;">❤️</div>
+              <div>Beğen</div>
+            </div>
+            <div class="task-option" data-task="retweet" onclick="toggleTask(this)">
+              <div style="font-size: 2rem;">🔄</div>
+              <div>Retweet</div>
+            </div>
+            <div class="task-option" data-task="comment" onclick="toggleTask(this)">
+              <div style="font-size: 2rem;">💬</div>
+              <div>Yorum Yap</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tweet URL'si (Opsiyonel)</label>
+          <input type="url" name="tweetUrl" placeholder="https://twitter.com/...">
+        </div>
+
+        <div class="fee-info">
+          <strong>Platform Ücreti:</strong> 0.001 ETH + Ödül Miktarı
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+          🚀 Çekilişi Başlat
+        </button>
+      </form>
     </div>
   </div>
 
-  <!-- Çark Bölümü -->
-  <div class="wheel-container">
-    <canvas id="wheelCanvas" width="400" height="400"></canvas>
-    <div>
-      <button id="spinButton" style="display:none" onclick="spinWheel()">🎯 Çarkı Çevir</button>
+  <!-- Çekiliş Detay Modal -->
+  <div id="detailModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
+      <div id="drawDetailContent">
+        <!-- Detaylar buraya yüklenecek -->
+      </div>
     </div>
   </div>
 
   <script>
-    let currentDrawIndex = -1;
-    let participants = [];
+    let web3Provider = null;
     let userAccount = null;
-    let draws = [];
-
-    // Contract yapılandırması
-    const CONTRACT_ADDRESS = "0xfcbb194cbe36e06c924966012f34c211f72af80d";
-    const CONTRACT_ABI = [
-      "function createDraw(string memory title, uint256 deadline, bool[4] memory tasks) public payable",
-      "function joinDraw(uint256 drawId) public",
-      "function setWinner(uint256 drawId, address winner) public",
-      "function getParticipants(uint256 drawId) public view returns (address[] memory)",
-      "function getDraw(uint256 drawId) public view returns (string memory title, uint256 deadline, bool[4] memory tasks, address creator, address winner, address[] memory participants, bool isActive, bool winnerSelected)",
-      "function getDrawCount() public view returns (uint256)",
-      "function getActiveDraws() public view returns (uint256[] memory)",
-      "function isParticipant(uint256 drawId, address user) public view returns (bool)",
-      "function getParticipantCount(uint256 drawId) public view returns (uint256)",
-      "function cancelDraw(uint256 drawId) public",
-      "event DrawCreated(uint256 indexed drawId, address indexed creator, string title, uint256 deadline)",
-      "event ParticipantJoined(uint256 indexed drawId, address indexed participant)",
-      "event WinnerSelected(uint256 indexed drawId, address indexed winner)"
-    ];
-
+    let twitterConnected = false;
     let contract = null;
+
+    // Contract bilgileri
+    const CONTRACT_ADDRESS = "0x..."; // Gerçek adres
+    const CONTRACT_ABI = []; // Gerçek ABI
 
     async function connectWallet() {
       if (typeof window.ethereum !== 'undefined') {
         try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const signer = provider.getSigner();
-          const address = await signer.getAddress();
-          userAccount = address;
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+          const signer = web3Provider.getSigner();
+          userAccount = await signer.getAddress();
           
-          // Contract instance oluştur
           contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
           
-          document.getElementById("connectWalletBtn").innerText = `🔗 ${address.slice(0,6)}...${address.slice(-4)}`;
-          document.getElementById("connectWalletBtn").style.background = "linear-gradient(45deg, #4caf50, #45a049)";
+          document.getElementById('connectWalletBtn').textContent = 
+            `${userAccount.slice(0, 6)}...${userAccount.slice(-4)}`;
           
-          await listDraws();
-        } catch (err) {
-          console.error("Cüzdan bağlantı hatası:", err);
-          alert("❌ Cüzdan bağlantısı reddedildi.");
+          await loadDraws();
+          await updateStats();
+        } catch (error) {
+          console.error('Wallet connection error:', error);
+          alert('Cüzdan bağlantısı başarısız!');
         }
       } else {
-        alert("⚠️ Metamask yüklü değil. Lütfen Metamask kurunu yapın.");
+        alert('MetaMask yüklü değil!');
       }
     }
 
-    function showCreateForm() {
-      document.getElementById("createSection").style.display = "block";
-      document.getElementById("drawDetails").style.display = "none";
+    function connectTwitter() {
+      // Twitter OAuth entegrasyonu
+      window.location.href = '/api/auth/twitter';
     }
 
-    function hideCreateForm() {
-      document.getElementById("createSection").style.display = "none";
+    function showCreateModal() {
+      if (!userAccount) {
+        alert('Önce cüzdanınızı bağlayın!');
+        return;
+      }
+      if (!twitterConnected) {
+        alert('Önce Twitter hesabınızı bağlayın!');
+        return;
+      }
+      document.getElementById('createModal').style.display = 'block';
     }
 
-    async function createDraw() {
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    function toggleTask(element) {
+      element.classList.toggle('selected');
+    }
+
+    async function createDraw(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      
+      const tasks = [
+        document.querySelector('[data-task="follow"]').classList.contains('selected'),
+        document.querySelector('[data-task="like"]').classList.contains('selected'),
+        document.querySelector('[data-task="retweet"]').classList.contains('selected'),
+        document.querySelector('[data-task="comment"]').classList.contains('selected')
+      ];
+
+      if (!tasks.some(t => t)) {
+        alert('En az bir görev seçmelisiniz!');
+        return;
+      }
+
       try {
-        if (!contract) {
-          alert("⚠️ Önce cüzdanınızı bağlayın.");
-          return;
-        }
+        const prizeAmount = ethers.utils.parseEther(formData.get('prizeAmount'));
+        const deadline = Math.floor(new Date(formData.get('deadline')).getTime() / 1000);
+        const creationFee = ethers.utils.parseEther("0.001");
+        const totalValue = prizeAmount.add(creationFee);
 
-        const title = document.getElementById("newTitle").value.trim();
-        const deadlineInput = document.getElementById("newEnd").value;
-        const tasks = [
-          document.getElementById("taskFollow").checked,
-          document.getElementById("taskLike").checked,
-          document.getElementById("taskRetweet").checked,
-          document.getElementById("taskComment").checked,
-        ];
+        const tx = await contract.createDraw(
+          formData.get('title'),
+          deadline,
+          tasks,
+          prizeAmount,
+          formData.get('prizeToken') === 'ETH' ? ethers.constants.AddressZero : '0x...', // Token adresi
+          formData.get('tweetUrl') || '',
+          { value: totalValue }
+        );
 
-        if (!title || !deadlineInput) {
-          alert("⚠️ Başlık ve bitiş tarihi zorunludur.");
-          return;
-        }
-
-        if (!tasks.some(task => task)) {
-          alert("⚠️ En az bir görev seçmelisiniz.");
-          return;
-        }
-
-        // Tarihi Unix timestamp'e çevir
-        const deadline = Math.floor(new Date(deadlineInput).getTime() / 1000);
-        const now = Math.floor(Date.now() / 1000);
-        
-        if (deadline <= now) {
-          alert("⚠️ Bitiş tarihi gelecekte olmalıdır.");
-          return;
-        }
-
-        // Transaction gönder
-        const fee = ethers.utils.parseEther("0.001");
-        const tx = await contract.createDraw(title, deadline, tasks, { value: fee });
-        
-        alert("⏳ İşlem gönderildi. Onaylanması bekleniyor...");
+        alert('İşlem gönderildi, onay bekleniyor...');
         await tx.wait();
         
-        alert("✅ Çekiliş başarıyla başlatıldı!");
-        hideCreateForm();
-        await listDraws();
-
-        // Form temizleme
-        document.getElementById("newTitle").value = "";
-        document.getElementById("newEnd").value = "";
-        document.querySelectorAll("#createSection input[type='checkbox']").forEach(cb => cb.checked = false);
-
-      } catch (err) {
-        console.error("Çekiliş oluşturma hatası:", err);
-        if (err.code === 4001) {
-          alert("❌ İşlem kullanıcı tarafından reddedildi.");
-        } else if (err.message.includes("insufficient funds")) {
-          alert("❌ Yetersiz bakiye. 0.001 ETH + gas ücreti gereklidir.");
-        } else {
-          alert("❌ Çekiliş oluşturulurken bir hata oluştu: " + (err.reason || err.message));
-        }
+        alert('Çekiliş başarıyla oluşturuldu!');
+        closeModal('createModal');
+        form.reset();
+        await loadDraws();
+      } catch (error) {
+        console.error('Create draw error:', error);
+        alert('Hata: ' + (error.reason || error.message));
       }
     }
 
-    async function listDraws() {
+    async function loadDraws() {
+      if (!contract) return;
+
       try {
-        if (!contract) {
-          // Contract bağlı değilse sadece placeholder göster
-          const list = document.getElementById("drawList");
-          list.innerHTML = '<div style="text-align: center; padding: 40px; color: #888;"><h3>Çekilişleri görüntülemek için cüzdanınızı bağlayın</h3></div>';
-          return;
-        }
-
         const drawCount = await contract.getDrawCount();
-        const list = document.getElementById("drawList");
-        list.innerHTML = "";
-        draws = [];
+        const drawsContainer = document.getElementById('drawsList');
+        drawsContainer.innerHTML = '';
 
-        if (drawCount.toNumber() === 0) {
-          list.innerHTML = '<div style="text-align: center; padding: 40px; color: #888;"><h3>Henüz çekiliş bulunmuyor</h3><p>İlk çekilişi siz başlatın!</p></div>';
-          return;
-        }
-
-        for (let i = 0; i < drawCount.toNumber(); i++) {
-          try {
-            const drawData = await contract.getDraw(i);
-            const draw = {
-              id: i,
-              title: drawData[0],
-              deadline: drawData[1].toNumber(),
-              tasks: drawData[2],
-              creator: drawData[3],
-              winner: drawData[4],
-              participants: drawData[5],
-              isActive: drawData[6],
-              winnerSelected: drawData[7]
-            };
-            
-            draws.push(draw);
-
-            const isActive = draw.isActive && (draw.deadline * 1000) > Date.now();
-            const deadlineDate = new Date(draw.deadline * 1000);
-            
-            const div = document.createElement("div");
-            div.className = "draw-card";
-            div.onclick = () => showDrawDetails(i);
-            
-            div.innerHTML = `
-              <h3>${draw.title}</h3>
-              <p>📅 Bitiş: ${deadlineDate.toLocaleDateString('tr-TR')}</p>
-              <p>👤 Oluşturan: ${draw.creator.slice(0, 6)}...${draw.creator.slice(-4)}</p>
-              <div class="participant-count">👥 ${draw.participants.length} katılımcı</div>
-              <span class="status-badge ${isActive ? 'status-active' : 'status-ended'}">
-                ${isActive ? '🟢 Aktif' : '🔴 Sona Erdi'}
-              </span>
-              ${draw.winner !== ethers.constants.AddressZero ? 
-                `<div style="margin-top: 10px; color: #ffd700;">🏆 Kazanan: ${draw.winner.slice(0, 6)}...${draw.winner.slice(-4)}</div>` : 
-                ''}
-            `;
-            list.appendChild(div);
-          } catch (err) {
-            console.error(`Draw ${i} yüklenirken hata:`, err);
+        for (let i = drawCount - 1; i >= Math.max(0, drawCount - 12); i--) {
+          const draw = await contract.getDraw(i);
+          if (draw.isActive) {
+            const card = createDrawCard(i, draw);
+            drawsContainer.appendChild(card);
           }
         }
-
-      } catch (err) {
-        console.error("Çekilişler yüklenirken hata:", err);
-        const list = document.getElementById("drawList");
-        list.innerHTML = '<div style="text-align: center; padding: 40px; color: #f44336;"><h3>Çekilişler yüklenirken hata oluştu</h3><p>Lütfen sayfayı yenileyin.</p></div>';
+      } catch (error) {
+        console.error('Load draws error:', error);
       }
     }
 
-    async function showDrawDetails(index) {
-      try {
-        currentDrawIndex = index;
-        const draw = draws[index];
+    function createDrawCard(id, draw) {
+      const card = document.createElement('div');
+      card.className = 'draw-card';
+      card.onclick = () => showDrawDetails(id);
+
+      const deadline = new Date(draw.deadline * 1000);
+      const now = new Date();
+      const hoursLeft = Math.floor((deadline - now) / (1000 * 60 * 60));
+      
+      const prizeAmount = ethers.utils.formatEther(draw.prizeAmount);
+      const tokenSymbol = draw.prizeToken === ethers.constants.AddressZero ? 'ETH' : 'USDT';
+
+      card.innerHTML = `
+        <div class="prize-badge">🏆 ${prizeAmount} ${tokenSymbol}</div>
+        <h3>${draw.title}</h3>
+        <p style="color: #888;">Oluşturan: ${draw.creator.slice(0, 6)}...${draw.creator.slice(-4)}</p>
         
-        document.getElementById("drawTitle").textContent = draw.title;
-        document.getElementById("drawDeadline").textContent = new Date(draw.deadline * 1000).toLocaleDateString('tr-TR');
-        document.getElementById("drawParticipants").textContent = draw.participants.length;
-        document.getElementById("winnerAddress").textContent = 
-          (draw.winner && draw.winner !== ethers.constants.AddressZero) ? 
-          `${draw.winner.slice(0, 10)}...${draw.winner.slice(-4)}` : 
-          "Henüz belirlenmedi";
+        <div class="tasks-preview">
+          ${draw.tasks[0] ? '<div class="task-icon">👥</div>' : ''}
+          ${draw.tasks[1] ? '<div class="task-icon">❤️</div>' : ''}
+          ${draw.tasks[2] ? '<div class="task-icon">🔄</div>' : ''}
+          ${draw.tasks[3] ? '<div class="task-icon">💬</div>' : ''}
+        </div>
 
-        // Görevleri listele
-        const tasksList = document.getElementById("tasksList");
-        const taskNames = ["👥 Twitter hesabını takip et", "❤️ Tweet'i beğen", "🔄 Tweet'i retweetle", "💬 Tweet'e yorum yap"];
-        tasksList.innerHTML = "";
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${(draw.participants.length / 100) * 100}%"></div>
+        </div>
 
-        draw.tasks.forEach((required, i) => {
-          if (required) {
-            const li = document.createElement("li");
-            li.innerHTML = `<input type="checkbox" id="task${i}" disabled> ${taskNames[i]}`;
-            tasksList.appendChild(li);
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+          <span>👥 ${draw.participants.length} katılımcı</span>
+          <span style="color: ${hoursLeft < 24 ? '#ff6b6b' : '#888'};">
+            ⏰ ${hoursLeft > 24 ? Math.floor(hoursLeft / 24) + ' gün' : hoursLeft + ' saat'} kaldı
+          </span>
+        </div>
+      `;
+
+      return card;
+    }
+
+    async function showDrawDetails(drawId) {
+      try {
+        const draw = await contract.getDraw(drawId);
+        const isParticipant = userAccount ? await contract.isParticipant(drawId, userAccount) : false;
+        const tasksCompleted = userAccount ? await checkTaskCompletion(drawId) : false;
+
+        const content = document.getElementById('drawDetailContent');
+        content.innerHTML = `
+          <h2>${draw.title}</h2>
+          
+          <div class="prize-badge" style="font-size: 1.2rem; margin: 1rem 0;">
+            🏆 ${ethers.utils.formatEther(draw.prizeAmount)} ${draw.prizeToken === ethers.constants.AddressZero ? 'ETH' : 'Token'}
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 2rem 0;">
+            <div>
+              <strong>Bitiş Tarihi:</strong><br>
+              ${new Date(draw.deadline * 1000).toLocaleString('tr-TR')}
+            </div>
+            <div>
+              <strong>Katılımcı Sayısı:</strong><br>
+              ${draw.participants.length}
+            </div>
+          </div>
+
+          ${!twitterConnected ? `
+            <div class="twitter-verification">
+              <h3>Twitter Hesabınızı Bağlayın</h3>
+              <p>Çekilişe katılmak için Twitter hesabınızı bağlamanız gerekiyor.</p>
+              <button class="btn btn-twitter" onclick="connectTwitter()" style="margin-top: 1rem;">
+                Twitter ile Giriş Yap
+              </button>
+            </div>
+          ` : `
+            <div class="twitter-verification">
+              <h3>Görevler</h3>
+              <div style="text-align: left; margin: 1rem 0;">
+                ${draw.tasks[0] ? '<div>✅ Twitter hesabını takip et</div>' : ''}
+                ${draw.tasks[1] ? '<div>✅ Tweet\'i beğen</div>' : ''}
+                ${draw.tasks[2] ? '<div>✅ Tweet\'i retweetle</div>' : ''}
+                ${draw.tasks[3] ? '<div>✅ Tweet\'e yorum yap</div>' : ''}
+              </div>
+              ${!isParticipant ? `
+                <button class="btn btn-primary" onclick="participateInDraw(${drawId})" 
+                  ${!tasksCompleted ? 'disabled' : ''}>
+                  ${tasksCompleted ? '✨ Çekilişe Katıl' : '⏳ Görevleri Tamamla'}
+                </button>
+              ` : '<p style="color: #4caf50;">✅ Çekilişe katıldınız!</p>'}
+            </div>
+          `}
+
+          <div class="participant-list">
+            <h4>Son Katılımcılar</h4>
+            ${draw.participants.slice(-10).map(p => `
+              <div class="participant-item">
+                <span>${p.slice(0, 6)}...${p.slice(-4)}</span>
+                <span style="color: #888; font-size: 0.9rem;">Katıldı</span>
+              </div>
+            `).join('')}
+          </div>
+
+          ${draw.creator.toLowerCase() === userAccount?.toLowerCase() && !draw.isActive ? `
+            <div style="margin-top: 2rem; text-align: center;">
+              <button class="btn btn-primary" onclick="selectWinner(${drawId})">
+                🎯 Kazananı Belirle (Chainlink VRF)
+              </button>
+            </div>
+          ` : ''}
+        `;
+
+        document.getElementById('detailModal').style.display = 'block';
+      } catch (error) {
+        console.error('Show draw details error:', error);
+        alert('Detaylar yüklenirken hata oluştu!');
+      }
+    }
+
+    async function checkTaskCompletion(drawId) {
+      // Backend API çağrısı yapılacak
+      try {
+        const response = await fetch('/api/check-tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            drawId,
+            userAddress: userAccount,
+            twitterHandle: localStorage.getItem('twitterHandle')
+          })
+        });
+        const data = await response.json();
+        return data.allTasksCompleted;
+      } catch (error) {
+        console.error('Task check error:', error);
+        return false;
+      }
+    }
+
+    async function participateInDraw(drawId) {
+      try {
+        const tx = await contract.joinDraw(drawId);
+        alert('İşlem gönderildi, onay bekleniyor...');
+        await tx.wait();
+        
+        alert('Çekilişe başarıyla katıldınız!');
+        closeModal('detailModal');
+        await loadDraws();
+      } catch (error) {
+        console.error('Participate error:', error);
+        alert('Hata: ' + (error.reason || error.message));
+      }
+    }
+
+    async function selectWinner(drawId) {
+      try {
+        // Chainlink VRF ile rastgele sayı talep et
+        const tx = await contract.requestRandomWinner(drawId);
+        alert('Rastgele sayı üretiliyor... Bu 1-2 dakika sürebilir.');
+        await tx.wait();
+        
+        // Event listener ile sonucu bekle
+        contract.on('WinnerSelected', async (eventDrawId, winner) => {
+          if (eventDrawId.toNumber() === drawId) {
+            alert(`🎉 Kazanan belirlendi: ${winner}`);
+            await loadDraws();
           }
         });
-
-        // Katılım durumunu kontrol et
-        let isParticipant = false;
-        if (userAccount && contract) {
-          try {
-            isParticipant = await contract.isParticipant(draw.id, userAccount);
-          } catch (err) {
-            console.error("Katılım durumu kontrol edilemedi:", err);
-          }
-        }
-
-        const isActive = draw.isActive && (draw.deadline * 1000) > Date.now();
-        const isCreator = userAccount && draw.creator.toLowerCase() === userAccount.toLowerCase();
-
-        document.getElementById("joinBtn").disabled = !userAccount || isParticipant || !isActive;
-        document.getElementById("joinBtn").textContent = isParticipant ? "✅ Zaten Katıldınız" : "✨ Çekilişe Katıl";
-
-        // Kazanan seçme butonu (sadece yaratıcı için ve çekiliş bittiğinde)
-        const selectWinnerBtn = document.getElementById("selectWinnerBtn");
-        if (isCreator && !isActive && draw.participants.length > 0 && !draw.winnerSelected) {
-          selectWinnerBtn.style.display = "inline-block";
-        } else {
-          selectWinnerBtn.style.display = "none";
-        }
-
-        document.getElementById("drawDetails").style.display = "block";
-        document.getElementById("createSection").style.display = "none";
-      } catch (err) {
-        console.error("Çekiliş detayları yüklenirken hata:", err);
-        alert("❌ Çekiliş detayları yüklenemedi.");
+      } catch (error) {
+        console.error('Select winner error:', error);
+        alert('Hata: ' + (error.reason || error.message));
       }
     }
 
-    function simulateTasks() {
-      // Görevleri simüle et (gerçek uygulamada API çağrıları yapılacak)
-      const draw = draws[currentDrawIndex];
-      const taskCheckboxes = document.querySelectorAll("#tasksList input[type='checkbox']");
-      
-      let completedTasks = 0;
-      taskCheckboxes.forEach((checkbox, index) => {
-        // %80 ihtimalle görevi tamamlamış gibi göster
-        const completed = Math.random() > 0.2;
-        checkbox.checked = completed;
-        if (completed) completedTasks++;
-      });
+    async function updateStats() {
+      if (!contract) return;
 
-      const totalTasks = taskCheckboxes.length;
-      if (completedTasks === totalTasks) {
-        alert(`✅ Tüm görevler tamamlandı! (${completedTasks}/${totalTasks})`);
-        document.getElementById("joinBtn").disabled = false;
-      } else {
-        alert(`⚠️ ${totalTasks - completedTasks} görev daha tamamlanması gerekiyor.`);
-      }
-    }
-
-    async function joinDraw() {
       try {
-        if (!userAccount || !contract) {
-          alert("⚠️ Önce cüzdanınızı bağlayın.");
-          return;
-        }
+        const totalDraws = await contract.getDrawCount();
+        const activeCount = await contract.getActiveDrawsCount();
+        const totalPrizeWei = await contract.getTotalPrizePool();
+        const totalParticipants = await contract.getTotalParticipants();
 
-        const draw = draws[currentDrawIndex];
-        
-        // Görevlerin tamamlanıp tamamlanmadığını kontrol et
-        const taskCheckboxes = document.querySelectorAll("#tasksList input[type='checkbox']");
-        const allCompleted = Array.from(taskCheckboxes).every(cb => cb.checked);
-
-        if (!allCompleted) {
-          alert("❌ Önce tüm görevleri tamamlamalısınız.");
-          return;
-        }
-
-        // Blockchain'e katılım isteği gönder
-        const tx = await contract.joinDraw(draw.id);
-        alert("⏳ İşlem gönderildi. Onaylanması bekleniyor...");
-        await tx.wait();
-
-        alert("🎉 Çekilişe başarıyla katıldınız!");
-        
-        // Görünümü güncelle
-        await listDraws();
-        await showDrawDetails(currentDrawIndex);
-
-      } catch (err) {
-        console.error("Katılım hatası:", err);
-        if (err.code === 4001) {
-          alert("❌ İşlem kullanıcı tarafından reddedildi.");
-        } else if (err.message.includes("Already joined")) {
-          alert("ℹ️ Zaten bu çekilişe katıldınız.");
-        } else if (err.message.includes("Draw has ended")) {
-          alert("❌ Çekiliş süresi dolmuş.");
-        } else {
-          alert("❌ Katılım sırasında hata oluştu: " + (err.reason || err.message));
-        }
+        document.getElementById('totalDraws').textContent = totalDraws.toString();
+        document.getElementById('activeDraws').textContent = activeCount.toString();
+        document.getElementById('totalPrize').textContent = 
+          ethers.utils.formatEther(totalPrizeWei).slice(0, 6) + ' ETH';
+        document.getElementById('totalParticipants').textContent = totalParticipants.toString();
+      } catch (error) {
+        console.error('Update stats error:', error);
       }
     }
 
-    async function selectWinner() {
-      try {
-        const draw = draws[currentDrawIndex];
-        
-        if (draw.participants.length === 0) {
-          alert("❌ Henüz katılımcı yok.");
-          return;
-        }
-
-        // Çarkı göster ve kazananı seç
-        participants = draw.participants;
-        document.getElementById("wheelCanvas").style.display = "block";
-        document.getElementById("spinButton").style.display = "inline-block";
-        drawWheel();
-      } catch (err) {
-        console.error("Kazanan seçim hatası:", err);
-        alert("❌ Kazanan seçilirken hata oluştu.");
-      }
-    }
-
-    function drawWheel() {
-      const canvas = document.getElementById("wheelCanvas");
-      const ctx = canvas.getContext("2d");
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const radius = 180;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (participants.length === 0) return;
-
-      const anglePerSlice = (2 * Math.PI) / participants.length;
-      const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
-
-      participants.forEach((participant, index) => {
-        const startAngle = index * anglePerSlice;
-        const endAngle = startAngle + anglePerSlice;
-        const color = colors[index % colors.length];
-
-        // Dilimi çiz
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Metin ekle
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(startAngle + anglePerSlice / 2);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#000';
-        ctx.font = 'bold 12px Arial';
-        const text = participant.slice(0, 6) + '...';
-        ctx.fillText(text, radius / 2, 5);
-        ctx.restore();
-      });
-
-      // Merkez daire
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, 20, 0, 2 * Math.PI);
-      ctx.fillStyle = '#333';
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // Ok çiz
-      ctx.beginPath();
-      ctx.moveTo(centerX + radius + 10, centerY);
-      ctx.lineTo(centerX + radius - 10, centerY - 15);
-      ctx.lineTo(centerX + radius - 10, centerY + 15);
-      ctx.closePath();
-      ctx.fillStyle = '#FF6B6B';
-      ctx.fill();
-    }
-
-    let spinning = false;
-    async function spinWheel() {
-      if (spinning) return;
-      spinning = true;
-
-      const canvas = document.getElementById("wheelCanvas");
-      let rotation = 0;
-      const spinDuration = 3000;
-      const spinSpeed = Math.random() * 360 + 1440; // 4-8 tam tur
-
-      const startTime = Date.now();
-      
-      function animate() {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / spinDuration, 1);
-        
-        // Easing function (yavaşlayarak dur)
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        rotation = spinSpeed * easeOut;
-
-        canvas.style.transform = `rotate(${rotation}deg)`;
-
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          // Kazananı belirle
-          const normalizedRotation = (360 - (rotation % 360)) % 360;
-          const anglePerSlice = 360 / participants.length;
-          const winnerIndex = Math.floor(normalizedRotation / anglePerSlice);
-          const winner = participants[winnerIndex];
-          
-          setTimeout(async () => {
-            try {
-              // Blockchain'e kazananı kaydet
-              if (contract) {
-                const tx = await contract.setWinner(draws[currentDrawIndex].id, winner);
-                alert("⏳ Kazanan kaydediliyor...");
-                await tx.wait();
-              }
-              
-              alert(`🎉 Tebrikler! Kazanan: ${winner.slice(0, 10)}...${winner.slice(-4)}`);
-              
-              // Görünümü güncelle
-              await listDraws();
-              await showDrawDetails(currentDrawIndex);
-              
-              spinning = false;
-              document.getElementById("wheelCanvas").style.display = "none";
-              document.getElementById("spinButton").style.display = "none";
-            } catch (err) {
-              console.error("Kazanan kaydetme hatası:", err);
-              alert("❌ Kazanan kaydedilirken hata oluştu: " + (err.reason || err.message));
-              spinning = false;
-            }
-          }, 500);
-        }
-      }
-      
-      animate();
-    }
-
-    function formatDate(dateString) {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('tr-TR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
-
-    // Sayfa yüklendiğinde çekilişleri listele
+    // Twitter OAuth callback handler
     window.addEventListener('load', () => {
-      listDraws();
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('twitter_connected') === 'true') {
+        twitterConnected = true;
+        const handle = urlParams.get('twitter_handle');
+        if (handle) {
+          localStorage.setItem('twitterHandle', handle);
+        }
+      }
+
+      // Auto-connect wallet if previously connected
+      if (window.ethereum && window.ethereum.selectedAddress) {
+        connectWallet();
+      }
     });
+
+    // Listen for account changes
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+          userAccount = null;
+          document.getElementById('connectWalletBtn').textContent = 'Cüzdan Bağla';
+        } else {
+          connectWallet();
+        }
+      });
+    }
   </script>
 </body>
 </html>
